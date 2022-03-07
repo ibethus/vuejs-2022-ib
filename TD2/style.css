@@ -1,0 +1,10 @@
+.movie {
+    background-color: lightblue;
+    padding: 0.5rem;
+    display: block;
+}
+
+.movie:hover {
+    background-color: rgb(94, 131, 143);
+    color: whitesmoke;
+}

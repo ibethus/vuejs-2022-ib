@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="style.css">
+    <title>Demo DAWIN</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <button v-on:click="hideMsg">Cacher</button>
+        <div v-if="!hidden">
+            <h2>Les meilleurs films de tous les temps :</h2>
+            <div class="recherche">
+                <input v-model="searchCriteria" type="text">
+                <button v-on:click="search" v-if="searchCriteria">Rechercher</button>
+                <button v-on:click="reset">Reset</button>
+            </div>
+            <div v-for="movie in filteredList">
+                <movie-item v-bind:movie="movie" v-on:edit-movie-item="editMovie" v-on:delete-movie-item="deleteMovie"></movie-item>
+            </div>
+            <div>
+                <h4>Ajouter/modifier un film</h4>
+                <div>
+                    <label for="titre">Titre</label>
+                    <input id="titre" v-model="newMovie.titre" placeholder="ex: Armageddon" type="text">
+                    <label for="sortie">Année de sortie</label>
+                    <input id="sortie" v-model="newMovie.sortie" placeholder="ex: 1960" type="number">
+                </div>
+                <div>
+                    <label for="real">Réalisateur.trice</label>
+                    <input id="real" v-model="newMovie.real" placeholder="ex: Marie-Georges" type="text">
+                    <label for="synopsis">Synopsis</label>
+                    <input id="synopsis" v-model="newMovie.synopsis" placeholder="ex: J'ai vu une grosse bête" type="text">
+                </div>
+                <div v-if="newMovieValid">
+                    <button v-on:click="addMovie">Enregistrer</button>
+                    <p>Première lettre écrite : {{firstTypedLetter}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        Vue.component('movie-item', {
+            template: `<a :title="movie" class="movie">
+                            <h3>{{movie.titre}}</h3>
+                            <button v-on:click="displayInfos($event)">Voir plus</button>
+                            <div hidden class="informations">
+                                <p>Date de sortie : {{movie.sortie}}</p>
+                                <p>Réalisateur : {{movie.real}}</p>
+                                <p>Synopsis : {{movie.synopsis}}</p>
+                            </div>
+                            <button v-on:click="emitEditMovie(movie)">Editer</button>
+                            <button v-on:click="emitDeleteMovie(movie)">Supprimer</button>
+                        </a>`,
+            props: {
+                movie: Object
+            },
+            methods: {
+                emitEditMovie: function(movie) {
+                    this.$emit('edit-movie-item', movie);
+                },
+                emitDeleteMovie: function(movie) {
+                    this.$emit('delete-movie-item', movie);
+                },
+                displayInfos: function(event) {
+                    event.target.parentNode.childNodes[4].hidden = !event.target.parentNode.childNodes[4].hidden;
+                }
+            }
+        })
+
+        const vm = new Vue({
+            el: "#app",
+            data: {
+                hidden: false,
+                movies: [{
+                    titre: "Leviathan",
+                    sortie: "1978",
+                    real: "Alphonse",
+                    synopsis: "Un gros ver de terre"
+                }, {
+                    titre: "Titanic",
+                    sortie: "1968",
+                    real: "Georges",
+                    synopsis: "On se la coule douce"
+                }, {
+                    titre: "Spiderman",
+                    sortie: "2010",
+                    real: "Jean-Patrick",
+                    synopsis: "Heureusement que c'était juste une araignée"
+                }],
+                filteredList: [],
+                newMovie: {
+                    titre: null,
+                    sortie: null,
+                    real: null,
+                    synopsis: null
+                },
+                toDelete: null,
+                searchCriteria: null
+            },
+            methods: {
+                hideMsg: function() {
+                    this.hidden = !this.hidden;
+                },
+                addMovie: function() {
+                    this.deleteMovie(this.toDelete);
+                    this.movies.push(Object.assign({}, this.newMovie));
+                    this.newMovie.titre = null;
+                    this.newMovie.sortie = null;
+                    this.newMovie.real = null;
+                    this.newMovie.synopsis = null;
+                },
+                deleteMovie: function(movie) {
+                    this.movies = this.movies.filter(m => m != movie);
+                    this.reset();
+                },
+                editMovie: function(movie) {
+                    this.newMovie = movie;
+                    this.toDelete = movie;
+                    this.reset();
+                },
+                search: function() {
+                    this.filteredList = this.movies.filter(m => (m.titre.toLowerCase().includes(this.searchCriteria.toLowerCase()) ||
+                        m.sortie.includes(this.searchCriteria) ||
+                        m.real.toLowerCase().includes(this.searchCriteria.toLowerCase())));
+                },
+                reset: function() {
+                    this.searchCriteria = null;
+                    this.filteredList = this.movies;
+                }
+            },
+            computed: {
+                firstTypedLetter: function() {
+                    if (this.newMovie) {
+                        return this.newMovie.titre.split("")[0];
+                    }
+                },
+                newMovieValid: function() {
+                    return this.newMovie.titre && this.newMovie.sortie && this.newMovie.real && this.newMovie.synopsis;
+                }
+            },
+            mounted() {
+                this.filteredList = this.movies;
+            }
+        })
+    </script>
+</body>
+
+</html>
